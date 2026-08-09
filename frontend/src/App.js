@@ -30,6 +30,10 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import './App.css';
+
+import Signup from './pages/Signup';
+import Login from './pages/Login';
+
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -38,6 +42,7 @@ import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
 
 function App() {
 
@@ -49,7 +54,8 @@ function App() {
             <main>
 
                 <Routes>
-
+                    <Route path='/login' element={<Login />} />
+                    <Route path='/signup' element={<Signup />} />
                     <Route
                         path="/"
                         element={<Home />}
@@ -69,6 +75,10 @@ function App() {
                     <Route
                         path="/checkout"
                         element={<Checkout />}
+                    />
+                    <Route
+                        path="/order-success"
+                        element={<OrderSuccess />}
                     />
 
                 </Routes>

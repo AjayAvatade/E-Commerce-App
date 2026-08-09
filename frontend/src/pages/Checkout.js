@@ -1,13 +1,36 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useCart } from "../context/CartContext";
+
+
 function Checkout() {
 
     const navigate = useNavigate();
 
-    const [paymentMethod, setPaymentMethod] = useState("COD");
+    const {
+        cartItems,
+        subtotal,
+        deliveryCharge,
+        total,
+        clearCart
+    } = useCart();
+
+
+    // =====================================================
+    // PAYMENT METHOD
+    // =====================================================
+
+    const [paymentMethod, setPaymentMethod] =
+        useState("COD");
+
+
+    // =====================================================
+    // FORM DATA
+    // =====================================================
 
     const [formData, setFormData] = useState({
+
         firstName: "",
         lastName: "",
         email: "",
@@ -16,77 +39,83 @@ function Checkout() {
         city: "",
         state: "",
         pincode: ""
+
     });
 
-    /* =====================================================
-       TEMPORARY CART DATA
-       Later → CartContext
-    ===================================================== */
 
-    const cartItems = [
-        {
-            _id: "1",
-            name: "Premium Wireless Headphones",
-            price: 2499,
-            quantity: 1,
-            image:
-                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300"
-        },
-        {
-            _id: "2",
-            name: "Classic Casual Sneakers",
-            price: 1899,
-            quantity: 2,
-            image:
-                "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300"
-        }
-    ];
-
-    /* =====================================================
-       HANDLE INPUT
-    ===================================================== */
+    // =====================================================
+    // HANDLE INPUT
+    // =====================================================
 
     const handleChange = (e) => {
 
-        const { name, value } = e.target;
+        const {
+            name,
+            value
+        } = e.target;
+
 
         setFormData({
+
             ...formData,
+
             [name]: value
+
         });
     };
 
 
-    /* =====================================================
-       CALCULATE TOTAL
-    ===================================================== */
+    // =====================================================
+    // EMPTY CART
+    // =====================================================
 
-    const subtotal = cartItems.reduce(
-        (total, item) =>
-            total + item.price * item.quantity,
-        0
-    );
+    if (cartItems.length === 0) {
 
-    const deliveryCharge =
-        subtotal >= 999 ? 0 : 79;
+        return (
 
-    const total =
-        subtotal + deliveryCharge;
+            <div className="empty-cart-page">
+
+                <div className="empty-cart-icon">
+                    🛒
+                </div>
+
+                <h1>
+                    Your Cart is Empty
+                </h1>
+
+                <p>
+                    Add some products before
+                    proceeding to checkout.
+                </p>
+
+                <button
+                    onClick={() =>
+                        navigate("/products")
+                    }
+                >
+                    Continue Shopping
+                </button>
+
+            </div>
+        );
+    }
 
 
-    /* =====================================================
-       PLACE ORDER
-    ===================================================== */
+    // =====================================================
+    // PLACE ORDER
+    // =====================================================
 
     const handlePlaceOrder = (e) => {
 
         e.preventDefault();
 
-        /*
-         * Basic validation
-         */
+
+        // -------------------------------------------------
+        // Validate fields
+        // -------------------------------------------------
 
         const requiredFields = [
+
             "firstName",
             "lastName",
             "email",
@@ -95,11 +124,16 @@ function Checkout() {
             "city",
             "state",
             "pincode"
+
         ];
 
-        const emptyField = requiredFields.find(
-            (field) => !formData[field].trim()
-        );
+
+        const emptyField =
+            requiredFields.find(
+                (field) =>
+                    !formData[field].trim()
+            );
+
 
         if (emptyField) {
 
@@ -111,9 +145,9 @@ function Checkout() {
         }
 
 
-        /*
-         * Create temporary order
-         */
+        // -------------------------------------------------
+        // Create order
+        // -------------------------------------------------
 
         const order = {
 
@@ -121,32 +155,36 @@ function Checkout() {
 
             items: cartItems,
 
-            subtotal,
+            subtotal: subtotal,
 
-            deliveryCharge,
+            deliveryCharge: deliveryCharge,
 
-            total,
+            total: total,
 
-            paymentMethod,
+            paymentMethod: paymentMethod,
 
             status:
                 paymentMethod === "COD"
                     ? "pending"
                     : "payment_pending"
+
         };
 
 
         console.log(
-            "Order:",
+            "Order Created:",
             order
         );
 
 
-        /*
-         * COD
-         */
+        // -------------------------------------------------
+        // COD
+        // -------------------------------------------------
 
         if (paymentMethod === "COD") {
+
+            clearCart();
+
 
             navigate(
                 "/order-success",
@@ -161,12 +199,9 @@ function Checkout() {
         }
 
 
-        /*
-         * Online Payment
-         *
-         * Later:
-         * Backend → Cashfree
-         */
+        // -------------------------------------------------
+        // ONLINE PAYMENT
+        // -------------------------------------------------
 
         alert(
             "Online payment integration will be connected with Cashfree."
@@ -175,10 +210,12 @@ function Checkout() {
 
 
     return (
+
         <div className="checkout-page">
 
+
             {/* =================================================
-                CHECKOUT HEADER
+                HEADER
             ================================================= */}
 
             <section className="checkout-header">
@@ -219,9 +256,9 @@ function Checkout() {
                 <div className="checkout-main">
 
 
-                    {/* =============================================
+                    {/* =================================================
                         CONTACT INFORMATION
-                    ============================================= */}
+                    ================================================= */}
 
                     <section className="checkout-card">
 
@@ -248,6 +285,9 @@ function Checkout() {
 
                         <div className="checkout-form-grid">
 
+
+                            {/* First Name */}
+
                             <div className="checkout-field">
 
                                 <label>
@@ -258,12 +298,18 @@ function Checkout() {
                                     type="text"
                                     name="firstName"
                                     placeholder="Enter first name"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.firstName
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                             </div>
 
+
+                            {/* Last Name */}
 
                             <div className="checkout-field">
 
@@ -275,12 +321,18 @@ function Checkout() {
                                     type="text"
                                     name="lastName"
                                     placeholder="Enter last name"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.lastName
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                             </div>
 
+
+                            {/* Email */}
 
                             <div className="checkout-field">
 
@@ -292,12 +344,18 @@ function Checkout() {
                                     type="email"
                                     name="email"
                                     placeholder="example@email.com"
-                                    value={formData.email}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.email
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                             </div>
 
+
+                            {/* Phone */}
 
                             <div className="checkout-field">
 
@@ -309,8 +367,12 @@ function Checkout() {
                                     type="tel"
                                     name="phone"
                                     placeholder="Enter phone number"
-                                    value={formData.phone}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.phone
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                             </div>
@@ -320,9 +382,9 @@ function Checkout() {
                     </section>
 
 
-                    {/* =============================================
+                    {/* =================================================
                         DELIVERY ADDRESS
-                    ============================================= */}
+                    ================================================= */}
 
                     <section className="checkout-card">
 
@@ -350,6 +412,8 @@ function Checkout() {
                         <div className="checkout-form-grid">
 
 
+                            {/* Address */}
+
                             <div className="checkout-field full-width">
 
                                 <label>
@@ -360,12 +424,18 @@ function Checkout() {
                                     name="address"
                                     rows="3"
                                     placeholder="House no., street, area..."
-                                    value={formData.address}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.address
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                             </div>
 
+
+                            {/* City */}
 
                             <div className="checkout-field">
 
@@ -377,12 +447,18 @@ function Checkout() {
                                     type="text"
                                     name="city"
                                     placeholder="Enter city"
-                                    value={formData.city}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.city
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                             </div>
 
+
+                            {/* State */}
 
                             <div className="checkout-field">
 
@@ -394,12 +470,18 @@ function Checkout() {
                                     type="text"
                                     name="state"
                                     placeholder="Enter state"
-                                    value={formData.state}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.state
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                             </div>
 
+
+                            {/* PIN */}
 
                             <div className="checkout-field">
 
@@ -412,8 +494,12 @@ function Checkout() {
                                     name="pincode"
                                     placeholder="Enter PIN code"
                                     maxLength="6"
-                                    value={formData.pincode}
-                                    onChange={handleChange}
+                                    value={
+                                        formData.pincode
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
                                 />
 
                             </div>
@@ -423,9 +509,9 @@ function Checkout() {
                     </section>
 
 
-                    {/* =============================================
-                        PAYMENT METHOD
-                    ============================================= */}
+                    {/* =================================================
+                        PAYMENT
+                    ================================================= */}
 
                     <section className="checkout-card">
 
@@ -468,16 +554,21 @@ function Checkout() {
                                     name="payment"
                                     value="COD"
                                     checked={
-                                        paymentMethod === "COD"
+                                        paymentMethod ===
+                                        "COD"
                                     }
                                     onChange={() =>
-                                        setPaymentMethod("COD")
+                                        setPaymentMethod(
+                                            "COD"
+                                        )
                                     }
                                 />
+
 
                                 <div className="payment-icon">
                                     💵
                                 </div>
+
 
                                 <div className="payment-info">
 
@@ -490,6 +581,7 @@ function Checkout() {
                                     </span>
 
                                 </div>
+
 
                                 <div className="payment-check">
                                     ✓
@@ -513,16 +605,21 @@ function Checkout() {
                                     name="payment"
                                     value="ONLINE"
                                     checked={
-                                        paymentMethod === "ONLINE"
+                                        paymentMethod ===
+                                        "ONLINE"
                                     }
                                     onChange={() =>
-                                        setPaymentMethod("ONLINE")
+                                        setPaymentMethod(
+                                            "ONLINE"
+                                        )
                                     }
                                 />
+
 
                                 <div className="payment-icon">
                                     💳
                                 </div>
+
 
                                 <div className="payment-info">
 
@@ -535,6 +632,7 @@ function Checkout() {
                                     </span>
 
                                 </div>
+
 
                                 <div className="payment-check">
                                     ✓
@@ -563,17 +661,20 @@ function Checkout() {
 
 
                 {/* =================================================
-                    RIGHT SIDE — ORDER SUMMARY
+                    RIGHT — ORDER SUMMARY
                 ================================================= */}
 
                 <aside className="checkout-summary">
+
 
                     <h2>
                         Order Summary
                     </h2>
 
 
-                    {/* Products */}
+                    {/* =================================================
+                        CART PRODUCTS
+                    ================================================= */}
 
                     <div className="checkout-products">
 
@@ -606,7 +707,9 @@ function Checkout() {
 
                                     <span>
                                         ₹
-                                        {item.price.toLocaleString(
+                                        {Number(
+                                            item.price
+                                        ).toLocaleString(
                                             "en-IN"
                                         )}
                                     </span>
@@ -623,7 +726,9 @@ function Checkout() {
                     <div className="checkout-summary-divider" />
 
 
-                    {/* Price */}
+                    {/* =================================================
+                        PRICE
+                    ================================================= */}
 
                     <div className="checkout-summary-row">
 
@@ -632,10 +737,12 @@ function Checkout() {
                         </span>
 
                         <strong>
+
                             ₹
                             {subtotal.toLocaleString(
                                 "en-IN"
                             )}
+
                         </strong>
 
                     </div>
@@ -648,9 +755,11 @@ function Checkout() {
                         </span>
 
                         <strong>
+
                             {deliveryCharge === 0
                                 ? "FREE"
                                 : `₹${deliveryCharge}`}
+
                         </strong>
 
                     </div>
@@ -659,6 +768,8 @@ function Checkout() {
                     <div className="checkout-summary-divider" />
 
 
+                    {/* TOTAL */}
+
                     <div className="checkout-total">
 
                         <span>
@@ -666,16 +777,20 @@ function Checkout() {
                         </span>
 
                         <strong>
+
                             ₹
                             {total.toLocaleString(
                                 "en-IN"
                             )}
+
                         </strong>
 
                     </div>
 
 
-                    {/* Place Order */}
+                    {/* =================================================
+                        PLACE ORDER
+                    ================================================= */}
 
                     <button
                         type="submit"
@@ -717,5 +832,6 @@ function Checkout() {
         </div>
     );
 }
+
 
 export default Checkout;

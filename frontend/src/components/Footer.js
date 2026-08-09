@@ -3,109 +3,212 @@ import { Link } from "react-router-dom";
 
 function Footer() {
     return (
-        <footer className="footer">
+        <footer className="main-footer">
 
-            {/* Main Footer */}
+            {/* =================================================
+                FOOTER TOP
+            ================================================= */}
+
             <div className="footer-container">
 
                 {/* Brand */}
-                <div className="footer-column footer-brand">
-                    <Link to="/" className="footer-logo">
-                        Shopora<span>.</span>
+
+                <div className="footer-brand">
+
+                    <Link
+                        to="/"
+                        className="footer-logo"
+                    >
+                        <span className="footer-logo-icon">
+                            S
+                        </span>
+
+                        <span>
+                            Shopzy
+                        </span>
                     </Link>
 
                     <p>
-                        Discover trending products, top brands and
-                        exclusive deals — all in one place.
+                        Discover products you love,
+                        delivered right to your doorstep.
+                        Shop smarter, shop better with
+                        Shopora.
                     </p>
 
-                    <div className="social-links">
-                        <a href="#facebook" aria-label="Facebook">
-                            f
-                        </a>
+                    <div className="footer-socials">
 
-                        <a href="#instagram" aria-label="Instagram">
+                        <a
+                            href="#"
+                            aria-label="Instagram"
+                        >
                             ◎
                         </a>
 
-                        <a href="#twitter" aria-label="Twitter">
+                        <a
+                            href="#"
+                            aria-label="Facebook"
+                        >
+                            f
+                        </a>
+
+                        <a
+                            href="#"
+                            aria-label="Twitter"
+                        >
                             𝕏
                         </a>
 
-                        <a href="#youtube" aria-label="YouTube">
-                            ▶
+                        <a
+                            href="#"
+                            aria-label="LinkedIn"
+                        >
+                            in
                         </a>
+
                     </div>
+
                 </div>
 
-                {/* Quick Links */}
+
+                {/* =================================================
+                    QUICK LINKS
+                ================================================= */}
+
                 <div className="footer-column">
-                    <h3>Quick Links</h3>
 
-                    <Link to="/">Home</Link>
-                    <Link to="/products">Shop</Link>
-                    <Link to="/deals">Deals</Link>
-                    <Link to="/new-arrivals">New Arrivals</Link>
-                    <Link to="/brands">Brands</Link>
+                    <h3>
+                        Quick Links
+                    </h3>
+
+                    <Link to="/">
+                        Home
+                    </Link>
+
+                    <Link to="/products">
+                        Shop
+                    </Link>
+
+                    <Link to="/categories">
+                        Categories
+                    </Link>
+
+                    <Link to="/about">
+                        About Us
+                    </Link>
+
+                    <Link to="/contact">
+                        Contact
+                    </Link>
+
                 </div>
 
-                {/* Customer Service */}
+
+                {/* =================================================
+                    CUSTOMER SERVICE
+                ================================================= */}
+
                 <div className="footer-column">
-                    <h3>Customer Service</h3>
 
-                    <Link to="/orders">Track Order</Link>
-                    <Link to="/returns">Returns & Refunds</Link>
-                    <Link to="/shipping">Shipping Information</Link>
-                    <Link to="/faq">FAQ</Link>
-                    <Link to="/support">Contact Support</Link>
+                    <h3>
+                        Customer Service
+                    </h3>
+
+                    <Link to="/orders">
+                        My Orders
+                    </Link>
+
+                    <Link to="/cart">
+                        Shopping Cart
+                    </Link>
+
+                    <Link to="/shipping">
+                        Shipping Information
+                    </Link>
+
+                    <Link to="/returns">
+                        Returns & Refunds
+                    </Link>
+
+                    <Link to="/faq">
+                        FAQ
+                    </Link>
+
                 </div>
 
-                {/* Account */}
-                <div className="footer-column">
-                    <h3>My Account</h3>
 
-                    <Link to="/profile">My Profile</Link>
-                    <Link to="/orders">My Orders</Link>
-                    <Link to="/wishlist">Wishlist</Link>
-                    <Link to="/cart">Shopping Cart</Link>
-                    <Link to="/login">Login</Link>
-                </div>
+                {/* =================================================
+                    CONTACT
+                ================================================= */}
 
-                {/* Contact */}
-                <div className="footer-column contact-column">
-                    <h3>Get In Touch</h3>
+                <div className="footer-column footer-contact">
 
-                    <div className="contact-item">
-                        <span>📍</span>
-                        <p>India</p>
+                    <h3>
+                        Get In Touch
+                    </h3>
+
+                    <div className="footer-contact-item">
+
+                        <span>
+                            📍
+                        </span>
+
+                        <p>
+                            Pune, Maharashtra,
+                            India
+                        </p>
+
                     </div>
 
-                    <div className="contact-item">
-                        <span>📧</span>
-                        <p>support@shopora.com</p>
+                    <div className="footer-contact-item">
+
+                        <span>
+                            ✉
+                        </span>
+
+                        <p>
+                            support@shopora.com
+                        </p>
+
                     </div>
 
-                    <div className="contact-item">
-                        <span>📞</span>
-                        <p>+91 98765 43210</p>
+                    <div className="footer-contact-item">
+
+                        <span>
+                            ☎
+                        </span>
+
+                        <p>
+                            +91 98765 43210
+                        </p>
+
                     </div>
 
-                    <div className="contact-item">
-                        <span>🕐</span>
-                        <p>24/7 Customer Support</p>
-                    </div>
                 </div>
 
             </div>
 
-            {/* Bottom Footer */}
+
+            {/* =================================================
+                FOOTER DIVIDER
+            ================================================= */}
+
+            <div className="footer-divider" />
+
+
+            {/* =================================================
+                FOOTER BOTTOM
+            ================================================= */}
+
             <div className="footer-bottom">
 
                 <p>
-                    © {new Date().getFullYear()} Shopora. All rights reserved.
+                    © {new Date().getFullYear()}
+                    {" "}
+                    Shopzy. All rights reserved.
                 </p>
 
-                <div className="footer-bottom-links">
+                <div>
+
                     <Link to="/privacy">
                         Privacy Policy
                     </Link>
@@ -114,9 +217,6 @@ function Footer() {
                         Terms & Conditions
                     </Link>
 
-                    <Link to="/cookies">
-                        Cookie Policy
-                    </Link>
                 </div>
 
             </div>

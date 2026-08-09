@@ -1,152 +1,182 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
-function ProductCard({ product, onAddToCart }) {
+function ProductCard({ product }) {
+
     const navigate = useNavigate();
 
-    const [isWishlisted, setIsWishlisted] = useState(false);
+    const { addToCart } = useCart();
 
-    if (!product) {
-        return null;
-    }
 
-    const {
-        _id,
-        id,
-        name,
-        image,
-        price,
-        oldPrice,
-        rating,
-        reviews,
-        discount,
-        category
-    } = product;
-
-    const productId = _id || id;
+    // =====================================================
+    // OPEN PRODUCT
+    // =====================================================
 
     const handleProductClick = () => {
-        navigate(`/products/${productId}`);
+        navigate(`/products/${product._id}`);
     };
 
-    const handleWishlist = (e) => {
-        e.stopPropagation();
 
-        setIsWishlisted(!isWishlisted);
-    };
+    // =====================================================
+    // ADD TO CART
+    // =====================================================
 
     const handleAddToCart = (e) => {
+
+        // Prevent card click
         e.stopPropagation();
 
-        if (onAddToCart) {
-            onAddToCart(product);
-        }
+        addToCart(product, 1);
     };
 
-    return (
-        <div className="product-card">
 
-            {/* Product Image Section */}
-            <div
-                className="product-image-container"
-                onClick={handleProductClick}
-            >
+    // =====================================================
+    // DISCOUNT
+    // =====================================================
+
+    const discount =
+        product.oldPrice && product.price
+            ? Math.round(
+                  ((product.oldPrice - product.price) /
+                      product.oldPrice) *
+                      100
+              )
+            : 0;
+
+
+    return (
+
+        <article
+            className="product-card"
+            onClick={handleProductClick}
+        >
+
+            {/* =================================================
+                IMAGE
+            ================================================= */}
+
+            <div className="product-card-image">
+
+                <img
+                    src={product.image}
+                    alt={product.name}
+                />
+
 
                 {/* Discount */}
-                {discount && (
+
+                {discount > 0 && (
+
                     <span className="product-discount">
                         {discount}% OFF
                     </span>
+
                 )}
 
+
                 {/* Wishlist */}
+
                 <button
-                    className={`wishlist-btn ${
-                        isWishlisted ? "wishlisted" : ""
-                    }`}
-                    onClick={handleWishlist}
+                    className="product-wishlist"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                    }}
                     aria-label="Add to wishlist"
                 >
-                    {isWishlisted ? "♥" : "♡"}
+                    ♡
                 </button>
-
-                {/* Product Image */}
-                <img
-                    src={image}
-                    alt={name}
-                    className="product-image"
-                />
 
             </div>
 
 
-            {/* Product Information */}
-            <div className="product-info">
+            {/* =================================================
+                PRODUCT INFORMATION
+            ================================================= */}
+
+            <div className="product-card-content">
+
 
                 {/* Category */}
-                {category && (
-                    <p className="product-category">
-                        {category}
-                    </p>
-                )}
 
-                {/* Product Name */}
-                <h3
-                    className="product-name"
-                    onClick={handleProductClick}
-                >
-                    {name}
+                <span className="product-card-category">
+                    {product.category}
+                </span>
+
+
+                {/* Name */}
+
+                <h3 className="product-card-name">
+                    {product.name}
                 </h3>
 
 
                 {/* Rating */}
-                <div className="product-rating">
 
-                    <span className="rating-star">
+                <div className="product-card-rating">
+
+                    <span>
                         ★
                     </span>
 
-                    <span className="rating-value">
-                        {rating || "4.5"}
-                    </span>
+                    <strong>
+                        {product.rating || "4.5"}
+                    </strong>
 
-                    {reviews !== undefined && (
-                        <span className="review-count">
-                            ({reviews})
-                        </span>
+                    {product.reviews && (
+
+                        <small>
+                            ({product.reviews})
+                        </small>
+
                     )}
 
                 </div>
 
 
                 {/* Price */}
-                <div className="product-price">
 
-                    <span className="current-price">
-                        ₹{Number(price).toLocaleString("en-IN")}
-                    </span>
+                <div className="product-card-bottom">
 
-                    {oldPrice && (
-                        <span className="old-price">
-                            ₹{Number(oldPrice).toLocaleString("en-IN")}
-                        </span>
-                    )}
+                    <div className="product-card-price">
+
+                        <strong>
+                            ₹
+                            {Number(
+                                product.price
+                            ).toLocaleString("en-IN")}
+                        </strong>
+
+
+                        {product.oldPrice && (
+
+                            <span>
+                                ₹
+                                {Number(
+                                    product.oldPrice
+                                ).toLocaleString("en-IN")}
+                            </span>
+
+                        )}
+
+                    </div>
+
+
+                    {/* Add to cart */}
+
+                    <button
+                        className="product-card-cart"
+                        onClick={handleAddToCart}
+                        aria-label="Add to cart"
+                    >
+                        🛒
+                    </button>
 
                 </div>
 
-
-                {/* Add To Cart */}
-                <button
-                    className="add-cart-btn"
-                    onClick={handleAddToCart}
-                >
-                    <span>🛒</span>
-                    Add to Cart
-                </button>
-
             </div>
 
-        </div>
+        </article>
     );
 }
 
