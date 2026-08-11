@@ -34,7 +34,7 @@ import './App.css';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
 
-import Navbar from "./components/Navbar";
+import Navbar from "./components/Header";
 import Footer from "./components/Footer";
 
 import Home from "./pages/Home";

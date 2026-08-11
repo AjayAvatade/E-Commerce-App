@@ -137,9 +137,9 @@ function Header() {
 
     const navigate = useNavigate();
 
-    const {
-        cartCount
-    } = useCart();
+    const { getCartItemCount } = useCart();
+
+    const cartCount = getCartItemCount();
 
 
     // =====================================================

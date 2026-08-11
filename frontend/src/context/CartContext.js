@@ -7,7 +7,7 @@ import React, {
 
 
 // =========================================================
-// CREATE CART CONTEXT
+// CREATE CONTEXT
 // =========================================================
 
 const CartContext = createContext();
@@ -17,31 +17,43 @@ const CartContext = createContext();
 // CART PROVIDER
 // =========================================================
 
-export const CartProvider = ({ children }) => {
+export function CartProvider({ children }) {
 
-    // -------------------------------------------------------
-    // Get cart from localStorage
-    // -------------------------------------------------------
+    // =====================================================
+    // CART STATE
+    // =====================================================
 
     const [cartItems, setCartItems] = useState(() => {
 
-        const savedCart =
-            localStorage.getItem("cart");
+        try {
 
-        return savedCart
-            ? JSON.parse(savedCart)
-            : [];
+            const savedCart =
+                localStorage.getItem("shoporaCart");
+
+            return savedCart
+                ? JSON.parse(savedCart)
+                : [];
+
+        } catch (error) {
+
+            console.error(
+                "Error loading cart:",
+                error
+            );
+
+            return [];
+        }
     });
 
 
-    // -------------------------------------------------------
-    // Save cart to localStorage whenever it changes
-    // -------------------------------------------------------
+    // =====================================================
+    // SAVE CART TO LOCAL STORAGE
+    // =====================================================
 
     useEffect(() => {
 
         localStorage.setItem(
-            "cart",
+            "shoporaCart",
             JSON.stringify(cartItems)
         );
 
@@ -54,44 +66,39 @@ export const CartProvider = ({ children }) => {
 
     const addToCart = (product, quantity = 1) => {
 
-        setCartItems((currentItems) => {
+        setCartItems((previousItems) => {
 
-            const existingItem =
-                currentItems.find(
+            const existingProduct =
+                previousItems.find(
                     (item) =>
                         item._id === product._id
                 );
 
 
-            // ------------------------------------------------
             // Product already exists
-            // ------------------------------------------------
+            if (existingProduct) {
 
-            if (existingItem) {
+                return previousItems.map(
+                    (item) =>
 
-                return currentItems.map((item) =>
+                        item._id === product._id
 
-                    item._id === product._id
+                            ? {
+                                ...item,
 
-                        ? {
-                            ...item,
+                                quantity:
+                                    item.quantity +
+                                    quantity
+                            }
 
-                            quantity:
-                                item.quantity +
-                                quantity
-                        }
-
-                        : item
+                            : item
                 );
             }
 
 
-            // ------------------------------------------------
             // New product
-            // ------------------------------------------------
-
             return [
-                ...currentItems,
+                ...previousItems,
 
                 {
                     ...product,
@@ -103,71 +110,52 @@ export const CartProvider = ({ children }) => {
 
 
     // =====================================================
+    // UPDATE QUANTITY
+    // =====================================================
+
+    const updateQuantity = (
+        productId,
+        newQuantity
+    ) => {
+
+        if (newQuantity <= 0) {
+
+            removeFromCart(productId);
+
+            return;
+        }
+
+
+        setCartItems((previousItems) =>
+
+            previousItems.map(
+                (item) =>
+
+                    item._id === productId
+
+                        ? {
+                            ...item,
+                            quantity: newQuantity
+                        }
+
+                        : item
+            )
+        );
+    };
+
+
+    // =====================================================
     // REMOVE FROM CART
     // =====================================================
 
     const removeFromCart = (productId) => {
 
-        setCartItems((currentItems) =>
+        setCartItems((previousItems) =>
 
-            currentItems.filter(
+            previousItems.filter(
                 (item) =>
                     item._id !== productId
             )
-        );
-    };
-
-
-    // =====================================================
-    // INCREASE QUANTITY
-    // =====================================================
-
-    const increaseQuantity = (productId) => {
-
-        setCartItems((currentItems) =>
-
-            currentItems.map((item) =>
-
-                item._id === productId
-
-                    ? {
-                        ...item,
-
-                        quantity:
-                            item.quantity + 1
-                    }
-
-                    : item
-            )
-        );
-    };
-
-
-    // =====================================================
-    // DECREASE QUANTITY
-    // =====================================================
-
-    const decreaseQuantity = (productId) => {
-
-        setCartItems((currentItems) =>
-
-            currentItems.map((item) => {
-
-                if (
-                    item._id === productId &&
-                    item.quantity > 1
-                ) {
-                    return {
-                        ...item,
-
-                        quantity:
-                            item.quantity - 1
-                    };
-                }
-
-                return item;
-
-            })
         );
     };
 
@@ -179,53 +167,48 @@ export const CartProvider = ({ children }) => {
     const clearCart = () => {
 
         setCartItems([]);
-
     };
 
 
     // =====================================================
-    // CART COUNT
+    // GET CART TOTAL
     // =====================================================
 
-    const cartCount = cartItems.reduce(
-        (total, item) =>
-            total + item.quantity,
-        0
-    );
+    const getCartTotal = () => {
 
+        return cartItems.reduce(
+            (total, item) => {
 
-    // =====================================================
-    // SUBTOTAL
-    // =====================================================
+                return (
+                    total +
+                    Number(item.price) *
+                    Number(item.quantity)
+                );
 
-    const subtotal = cartItems.reduce(
-        (total, item) =>
-            total +
-            Number(item.price) *
-            item.quantity,
-        0
-    );
+            },
+            0
+        );
+    };
 
 
     // =====================================================
-    // DELIVERY CHARGE
+    // GET TOTAL ITEMS
     // =====================================================
 
-    const deliveryCharge =
-        subtotal === 0
-            ? 0
-            : subtotal >= 999
-                ? 0
-                : 79;
+    const getCartItemCount = () => {
 
+        return cartItems.reduce(
+            (total, item) => {
 
-    // =====================================================
-    // TOTAL
-    // =====================================================
+                return (
+                    total +
+                    Number(item.quantity)
+                );
 
-    const total =
-        subtotal +
-        deliveryCharge;
+            },
+            0
+        );
+    };
 
 
     // =====================================================
@@ -236,42 +219,39 @@ export const CartProvider = ({ children }) => {
 
         cartItems,
 
-        cartCount,
-
-        subtotal,
-
-        deliveryCharge,
-
-        total,
-
         addToCart,
+
+        updateQuantity,
 
         removeFromCart,
 
-        increaseQuantity,
+        clearCart,
 
-        decreaseQuantity,
+        getCartTotal,
 
-        clearCart
+        getCartItemCount
+
     };
 
 
     return (
+
         <CartContext.Provider value={value}>
+
             {children}
+
         </CartContext.Provider>
     );
-};
+}
 
 
 // =========================================================
 // CUSTOM HOOK
 // =========================================================
 
-export const useCart = () => {
+export function useCart() {
 
-    const context =
-        useContext(CartContext);
+    const context = useContext(CartContext);
 
 
     if (!context) {
@@ -283,4 +263,4 @@ export const useCart = () => {
 
 
     return context;
-};
+}

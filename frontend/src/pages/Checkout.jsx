@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { useCart } from "../context/CartContext";
-
 
 function Checkout() {
 
@@ -10,37 +8,48 @@ function Checkout() {
 
     const {
         cartItems,
-        subtotal,
-        deliveryCharge,
-        total,
+        getCartTotal,
         clearCart
     } = useCart();
 
 
     // =====================================================
-    // PAYMENT METHOD
-    // =====================================================
-
-    const [paymentMethod, setPaymentMethod] =
-        useState("COD");
-
-
-    // =====================================================
-    // FORM DATA
+    // FORM STATE
     // =====================================================
 
     const [formData, setFormData] = useState({
-
-        firstName: "",
-        lastName: "",
+        fullName: "",
         email: "",
         phone: "",
         address: "",
         city: "",
         state: "",
         pincode: ""
-
     });
+
+
+    const [paymentMethod, setPaymentMethod] =
+        useState("COD");
+
+
+    const [error, setError] = useState("");
+
+
+    // =====================================================
+    // TOTALS
+    // =====================================================
+
+    const subtotal = getCartTotal();
+
+    const deliveryCharge =
+        subtotal === 0
+            ? 0
+            : subtotal >= 999
+            ? 0
+            : 49;
+
+    const total =
+        subtotal + deliveryCharge;
 
 
     // =====================================================
@@ -54,15 +63,233 @@ function Checkout() {
             value
         } = e.target;
 
-
-        setFormData({
-
-            ...formData,
-
+        setFormData((previous) => ({
+            ...previous,
             [name]: value
+        }));
 
-        });
+        setError("");
     };
+
+
+    // =====================================================
+    // VALIDATE FORM
+    // =====================================================
+
+    const validateForm = () => {
+
+        const {
+            fullName,
+            email,
+            phone,
+            address,
+            city,
+            state,
+            pincode
+        } = formData;
+
+
+        if (
+            !fullName ||
+            !email ||
+            !phone ||
+            !address ||
+            !city ||
+            !state ||
+            !pincode
+        ) {
+
+            setError(
+                "Please fill in all required fields."
+            );
+
+            return false;
+        }
+
+
+        if (phone.length !== 10) {
+
+            setError(
+                "Please enter a valid 10-digit phone number."
+            );
+
+            return false;
+        }
+
+
+        if (pincode.length !== 6) {
+
+            setError(
+                "Please enter a valid 6-digit pincode."
+            );
+
+            return false;
+        }
+
+
+        return true;
+    };
+
+
+    // =====================================================
+    // PLACE ORDER
+    // =====================================================
+
+    const handlePlaceOrder = async () => {
+
+    if (!validateForm()) {
+        return;
+    }
+
+
+    try {
+
+        // ================================================
+        // GET JWT TOKEN
+        // ================================================
+
+        const token =
+            localStorage.getItem("token");
+
+
+        if (!token) {
+
+            setError(
+                "Please login before placing an order."
+            );
+
+            navigate("/login");
+
+            return;
+        }
+
+
+        // ================================================
+        // PREPARE ORDER DATA
+        // ================================================
+
+        const orderData = {
+
+            items: cartItems.map((item) => ({
+
+                product:
+                    item._id,
+
+                quantity:
+                    Number(item.quantity)
+
+            })),
+
+            shippingAddress: {
+
+                fullName:
+                    formData.fullName,
+
+                email:
+                    formData.email,
+
+                phone:
+                    formData.phone,
+
+                address:
+                    formData.address,
+
+                city:
+                    formData.city,
+
+                state:
+                    formData.state,
+
+                pincode:
+                    formData.pincode
+
+            },
+
+            paymentMethod
+
+        };
+
+
+        // ================================================
+        // SEND ORDER TO BACKEND
+        // ================================================
+
+        const response = await fetch(
+            "http://localhost:8080/api/orders",
+            {
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json",
+
+                    "Authorization":
+                        `Bearer ${token}`
+                },
+
+                body:
+                    JSON.stringify(orderData)
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        // ================================================
+        // HANDLE BACKEND ERROR
+        // ================================================
+
+        if (!response.ok) {
+
+            setError(
+                data.message ||
+                "Failed to place order."
+            );
+
+            return;
+        }
+
+
+        // ================================================
+        // SAVE ORDER FOR SUCCESS PAGE
+        // ================================================
+
+        localStorage.setItem(
+            "shoporaLastOrder",
+            JSON.stringify(data.order)
+        );
+
+
+        // ================================================
+        // CLEAR CART
+        // ================================================
+
+        clearCart();
+
+
+        // ================================================
+        // GO TO SUCCESS PAGE
+        // ================================================
+
+        navigate("/order-success");
+
+
+    } catch (error) {
+
+        console.error(
+            "Place Order Error:",
+            error
+        );
+
+
+        setError(
+            "Unable to connect to the server. Please try again."
+        );
+    }
+};
 
 
     // =====================================================
@@ -73,145 +300,41 @@ function Checkout() {
 
         return (
 
-            <div className="empty-cart-page">
+            <main className="checkout-page">
 
-                <div className="empty-cart-icon">
-                    🛒
-                </div>
+                <section className="checkout-empty">
 
-                <h1>
-                    Your Cart is Empty
-                </h1>
+                    <div>
+                        🛒
+                    </div>
 
-                <p>
-                    Add some products before
-                    proceeding to checkout.
-                </p>
+                    <h1>
+                        Your Cart is Empty
+                    </h1>
 
-                <button
-                    onClick={() =>
-                        navigate("/products")
-                    }
-                >
-                    Continue Shopping
-                </button>
+                    <p>
+                        Add some products before
+                        proceeding to checkout.
+                    </p>
 
-            </div>
+                    <button
+                        onClick={() =>
+                            navigate("/products")
+                        }
+                    >
+                        Start Shopping
+                    </button>
+
+                </section>
+
+            </main>
         );
     }
 
 
-    // =====================================================
-    // PLACE ORDER
-    // =====================================================
-
-    const handlePlaceOrder = (e) => {
-
-        e.preventDefault();
-
-
-        // -------------------------------------------------
-        // Validate fields
-        // -------------------------------------------------
-
-        const requiredFields = [
-
-            "firstName",
-            "lastName",
-            "email",
-            "phone",
-            "address",
-            "city",
-            "state",
-            "pincode"
-
-        ];
-
-
-        const emptyField =
-            requiredFields.find(
-                (field) =>
-                    !formData[field].trim()
-            );
-
-
-        if (emptyField) {
-
-            alert(
-                "Please fill all delivery details."
-            );
-
-            return;
-        }
-
-
-        // -------------------------------------------------
-        // Create order
-        // -------------------------------------------------
-
-        const order = {
-
-            customer: formData,
-
-            items: cartItems,
-
-            subtotal: subtotal,
-
-            deliveryCharge: deliveryCharge,
-
-            total: total,
-
-            paymentMethod: paymentMethod,
-
-            status:
-                paymentMethod === "COD"
-                    ? "pending"
-                    : "payment_pending"
-
-        };
-
-
-        console.log(
-            "Order Created:",
-            order
-        );
-
-
-        // -------------------------------------------------
-        // COD
-        // -------------------------------------------------
-
-        if (paymentMethod === "COD") {
-
-            clearCart();
-
-
-            navigate(
-                "/order-success",
-                {
-                    state: {
-                        order
-                    }
-                }
-            );
-
-            return;
-        }
-
-
-        // -------------------------------------------------
-        // ONLINE PAYMENT
-        // -------------------------------------------------
-
-        alert(
-            "Online payment integration will be connected with Cashfree."
-        );
-    };
-
-
     return (
 
-        <div className="checkout-page">
+        <main className="checkout-page">
 
 
             {/* =================================================
@@ -220,21 +343,18 @@ function Checkout() {
 
             <section className="checkout-header">
 
-                <div>
+                <span>
+                    SHOPORA CHECKOUT
+                </span>
 
-                    <span className="section-label">
-                        SHOPORA CHECKOUT
-                    </span>
+                <h1>
+                    Complete Your Order
+                </h1>
 
-                    <h1>
-                        Checkout
-                    </h1>
-
-                    <p>
-                        Complete your order securely.
-                    </p>
-
-                </div>
+                <p>
+                    Enter your details and choose
+                    your preferred payment method.
+                </p>
 
             </section>
 
@@ -243,35 +363,32 @@ function Checkout() {
                 CHECKOUT CONTENT
             ================================================= */}
 
-            <form
-                className="checkout-container"
-                onSubmit={handlePlaceOrder}
-            >
+            <section className="checkout-container">
 
 
                 {/* =================================================
                     LEFT SIDE
                 ================================================= */}
 
-                <div className="checkout-main">
+                <div className="checkout-form">
 
 
                     {/* =================================================
-                        CONTACT INFORMATION
+                        CUSTOMER INFORMATION
                     ================================================= */}
 
-                    <section className="checkout-card">
+                    <div className="checkout-card">
 
-                        <div className="checkout-section-title">
+                        <div className="checkout-card-title">
 
-                            <div className="checkout-number">
+                            <span>
                                 01
-                            </div>
+                            </span>
 
                             <div>
 
                                 <h2>
-                                    Contact Information
+                                    Customer Information
                                 </h2>
 
                                 <p>
@@ -283,46 +400,23 @@ function Checkout() {
                         </div>
 
 
-                        <div className="checkout-form-grid">
+                        <div className="checkout-input-grid">
 
 
-                            {/* First Name */}
-
-                            <div className="checkout-field">
-
-                                <label>
-                                    First Name
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    placeholder="Enter first name"
-                                    value={
-                                        formData.firstName
-                                    }
-                                    onChange={
-                                        handleChange
-                                    }
-                                />
-
-                            </div>
-
-
-                            {/* Last Name */}
+                            {/* Full Name */}
 
                             <div className="checkout-field">
 
                                 <label>
-                                    Last Name
+                                    Full Name *
                                 </label>
 
                                 <input
                                     type="text"
-                                    name="lastName"
-                                    placeholder="Enter last name"
+                                    name="fullName"
+                                    placeholder="Enter your full name"
                                     value={
-                                        formData.lastName
+                                        formData.fullName
                                     }
                                     onChange={
                                         handleChange
@@ -337,13 +431,13 @@ function Checkout() {
                             <div className="checkout-field">
 
                                 <label>
-                                    Email Address
+                                    Email Address *
                                 </label>
 
                                 <input
                                     type="email"
                                     name="email"
-                                    placeholder="example@email.com"
+                                    placeholder="Enter your email"
                                     value={
                                         formData.email
                                     }
@@ -360,39 +454,54 @@ function Checkout() {
                             <div className="checkout-field">
 
                                 <label>
-                                    Phone Number
+                                    Phone Number *
                                 </label>
 
                                 <input
                                     type="tel"
                                     name="phone"
-                                    placeholder="Enter phone number"
+                                    maxLength="10"
+                                    placeholder="10-digit mobile number"
                                     value={
                                         formData.phone
                                     }
-                                    onChange={
-                                        handleChange
-                                    }
+                                    onChange={(e) => {
+
+                                        const value =
+                                            e.target.value.replace(
+                                                /\D/g,
+                                                ""
+                                            );
+
+                                        setFormData(
+                                            (previous) => ({
+                                                ...previous,
+                                                phone: value
+                                            })
+                                        );
+
+                                        setError("");
+                                    }}
                                 />
 
                             </div>
 
                         </div>
 
-                    </section>
+                    </div>
 
 
                     {/* =================================================
                         DELIVERY ADDRESS
                     ================================================= */}
 
-                    <section className="checkout-card">
+                    <div className="checkout-card">
 
-                        <div className="checkout-section-title">
+                        <div className="checkout-card-title">
 
-                            <div className="checkout-number">
+                            <span>
                                 02
-                            </div>
+                            </span>
 
                             <div>
 
@@ -401,7 +510,8 @@ function Checkout() {
                                 </h2>
 
                                 <p>
-                                    Where should we deliver your order?
+                                    Where should we deliver
+                                    your order?
                                 </p>
 
                             </div>
@@ -409,7 +519,7 @@ function Checkout() {
                         </div>
 
 
-                        <div className="checkout-form-grid">
+                        <div className="checkout-input-grid">
 
 
                             {/* Address */}
@@ -417,19 +527,19 @@ function Checkout() {
                             <div className="checkout-field full-width">
 
                                 <label>
-                                    Address
+                                    Address *
                                 </label>
 
                                 <textarea
                                     name="address"
-                                    rows="3"
-                                    placeholder="House no., street, area..."
+                                    placeholder="House No., Street, Area..."
                                     value={
                                         formData.address
                                     }
                                     onChange={
                                         handleChange
                                     }
+                                    rows="3"
                                 />
 
                             </div>
@@ -440,7 +550,7 @@ function Checkout() {
                             <div className="checkout-field">
 
                                 <label>
-                                    City
+                                    City *
                                 </label>
 
                                 <input
@@ -463,7 +573,7 @@ function Checkout() {
                             <div className="checkout-field">
 
                                 <label>
-                                    State
+                                    State *
                                 </label>
 
                                 <input
@@ -481,45 +591,59 @@ function Checkout() {
                             </div>
 
 
-                            {/* PIN */}
+                            {/* Pincode */}
 
                             <div className="checkout-field">
 
                                 <label>
-                                    PIN Code
+                                    Pincode *
                                 </label>
 
                                 <input
                                     type="text"
                                     name="pincode"
-                                    placeholder="Enter PIN code"
                                     maxLength="6"
+                                    placeholder="6-digit pincode"
                                     value={
                                         formData.pincode
                                     }
-                                    onChange={
-                                        handleChange
-                                    }
+                                    onChange={(e) => {
+
+                                        const value =
+                                            e.target.value.replace(
+                                                /\D/g,
+                                                ""
+                                            );
+
+                                        setFormData(
+                                            (previous) => ({
+                                                ...previous,
+                                                pincode: value
+                                            })
+                                        );
+
+                                        setError("");
+                                    }}
                                 />
 
                             </div>
 
                         </div>
 
-                    </section>
+                    </div>
 
 
                     {/* =================================================
-                        PAYMENT
+                        PAYMENT METHOD
                     ================================================= */}
 
-                    <section className="checkout-card">
+                    <div className="checkout-card">
 
-                        <div className="checkout-section-title">
+                        <div className="checkout-card-title">
 
-                            <div className="checkout-number">
+                            <span>
                                 03
-                            </div>
+                            </span>
 
                             <div>
 
@@ -542,11 +666,11 @@ function Checkout() {
                             {/* COD */}
 
                             <label
-                                className={
+                                className={`payment-option ${
                                     paymentMethod === "COD"
-                                        ? "payment-option active"
-                                        : "payment-option"
-                                }
+                                        ? "active"
+                                        : ""
+                                }`}
                             >
 
                                 <input
@@ -554,37 +678,29 @@ function Checkout() {
                                     name="payment"
                                     value="COD"
                                     checked={
-                                        paymentMethod ===
-                                        "COD"
+                                        paymentMethod === "COD"
                                     }
-                                    onChange={() =>
+                                    onChange={(e) =>
                                         setPaymentMethod(
-                                            "COD"
+                                            e.target.value
                                         )
                                     }
                                 />
 
-
-                                <div className="payment-icon">
+                                <span className="payment-icon">
                                     💵
-                                </div>
+                                </span>
 
-
-                                <div className="payment-info">
+                                <div>
 
                                     <strong>
                                         Cash on Delivery
                                     </strong>
 
-                                    <span>
+                                    <small>
                                         Pay when your order arrives
-                                    </span>
+                                    </small>
 
-                                </div>
-
-
-                                <div className="payment-check">
-                                    ✓
                                 </div>
 
                             </label>
@@ -593,11 +709,11 @@ function Checkout() {
                             {/* ONLINE */}
 
                             <label
-                                className={
+                                className={`payment-option ${
                                     paymentMethod === "ONLINE"
-                                        ? "payment-option active"
-                                        : "payment-option"
-                                }
+                                        ? "active"
+                                        : ""
+                                }`}
                             >
 
                                 <input
@@ -605,76 +721,74 @@ function Checkout() {
                                     name="payment"
                                     value="ONLINE"
                                     checked={
-                                        paymentMethod ===
-                                        "ONLINE"
+                                        paymentMethod === "ONLINE"
                                     }
-                                    onChange={() =>
+                                    onChange={(e) =>
                                         setPaymentMethod(
-                                            "ONLINE"
+                                            e.target.value
                                         )
                                     }
                                 />
 
-
-                                <div className="payment-icon">
+                                <span className="payment-icon">
                                     💳
-                                </div>
+                                </span>
 
-
-                                <div className="payment-info">
+                                <div>
 
                                     <strong>
                                         Online Payment
                                     </strong>
 
-                                    <span>
-                                        UPI, Card, Net Banking
-                                    </span>
+                                    <small>
+                                        Pay securely using UPI,
+                                        card or net banking
+                                    </small>
 
-                                </div>
-
-
-                                <div className="payment-check">
-                                    ✓
                                 </div>
 
                             </label>
 
                         </div>
 
+                    </div>
 
-                        {paymentMethod === "ONLINE" && (
 
-                            <div className="online-payment-note">
+                    {/* ERROR */}
 
-                                🔒 You will be redirected to
-                                our secure payment gateway
-                                after placing the order.
+                    {error && (
 
-                            </div>
+                        <div className="checkout-error">
+                            ⚠ {error}
+                        </div>
 
-                        )}
+                    )}
 
-                    </section>
+
+                    {/* PLACE ORDER */}
+
+                    <button
+                        className="place-order-button"
+                        onClick={handlePlaceOrder}
+                    >
+                        Place Order
+                    </button>
 
                 </div>
 
 
                 {/* =================================================
-                    RIGHT — ORDER SUMMARY
+                    RIGHT SIDE — ORDER SUMMARY
                 ================================================= */}
 
                 <aside className="checkout-summary">
-
 
                     <h2>
                         Order Summary
                     </h2>
 
 
-                    {/* =================================================
-                        CART PRODUCTS
-                    ================================================= */}
+                    {/* Products */}
 
                     <div className="checkout-products">
 
@@ -705,16 +819,27 @@ function Checkout() {
                                         {item.name}
                                     </h3>
 
-                                    <span>
+                                    <small>
                                         ₹
                                         {Number(
                                             item.price
                                         ).toLocaleString(
                                             "en-IN"
                                         )}
-                                    </span>
+                                    </small>
 
                                 </div>
+
+
+                                <strong>
+                                    ₹
+                                    {(
+                                        item.price *
+                                        item.quantity
+                                    ).toLocaleString(
+                                        "en-IN"
+                                    )}
+                                </strong>
 
                             </div>
 
@@ -726,29 +851,27 @@ function Checkout() {
                     <div className="checkout-summary-divider" />
 
 
-                    {/* =================================================
-                        PRICE
-                    ================================================= */}
+                    {/* Subtotal */}
 
-                    <div className="checkout-summary-row">
+                    <div className="checkout-summary-line">
 
                         <span>
                             Subtotal
                         </span>
 
                         <strong>
-
                             ₹
                             {subtotal.toLocaleString(
                                 "en-IN"
                             )}
-
                         </strong>
 
                     </div>
 
 
-                    <div className="checkout-summary-row">
+                    {/* Delivery */}
+
+                    <div className="checkout-summary-line">
 
                         <span>
                             Delivery
@@ -768,70 +891,53 @@ function Checkout() {
                     <div className="checkout-summary-divider" />
 
 
-                    {/* TOTAL */}
+                    {/* Total */}
 
-                    <div className="checkout-total">
+                    <div className="checkout-grand-total">
 
                         <span>
                             Total
                         </span>
 
                         <strong>
-
                             ₹
                             {total.toLocaleString(
                                 "en-IN"
                             )}
-
                         </strong>
 
                     </div>
 
 
-                    {/* =================================================
-                        PLACE ORDER
-                    ================================================= */}
-
-                    <button
-                        type="submit"
-                        className="place-order-btn"
-                    >
-
-                        {paymentMethod === "COD"
-                            ? "Place Order"
-                            : "Continue to Payment"}
-
-                        <span>
-                            →
-                        </span>
-
-                    </button>
-
+                    {/* Security */}
 
                     <div className="checkout-security">
 
-                        🔒 Secure Checkout
+                        <span>
+                            🔒
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Secure Checkout
+                            </strong>
+
+                            <small>
+                                Your information is
+                                protected.
+                            </small>
+
+                        </div>
 
                     </div>
 
-
-                    <button
-                        type="button"
-                        className="back-to-cart-btn"
-                        onClick={() =>
-                            navigate("/cart")
-                        }
-                    >
-                        ← Back to Cart
-                    </button>
-
                 </aside>
 
-            </form>
+            </section>
 
-        </div>
+        </main>
     );
 }
-
 
 export default Checkout;
